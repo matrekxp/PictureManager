@@ -1,8 +1,54 @@
 ﻿<Window x:Class="PictureManager.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="MainWindow" Height="216" Width="429">
-    <Grid Background="Aquamarine">
+        xmlns:ctr="clr-namespace:PictureManager.Spinner"
+        Title="MainWindow" Height="274" Width="696">
 
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="35"/>
+            <RowDefinition Height="1*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="90"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" Name="txtFolderPath" MinWidth="120" Margin="5" Text="C:\Users\Mateusz\Downloads\HQ_Wallpapers_Pack\walzzz56"/>
+            <Button Grid.Column="1" Name="btnLoadFolderPath" Content="Load" MinWidth="80" Margin="5" Click="btnLoadFolderPath_Click"/>
+        </Grid>
+        <ListView Background="Black" Grid.Row="1" ItemsSource="{Binding lstImages}" Name="lstView" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
+            <ListView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel Orientation="Horizontal"/>
+                </ItemsPanelTemplate>
+            </ListView.ItemsPanel>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Image Width="100" Height="100" Source="{Binding Image.Source}"/>
+                        <ctr:CircularProgressBar x:Name="progressBar"
+                             DockPanel.Dock="Left"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center"
+                             Height="100px" 
+                             Visibility="{Binding Path=IsProcessing, Converter={StaticResource BoolToVis}}"/>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+        <StatusBar Grid.Row="2" >
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal" >
+                    <TextBlock Text="Przetwarzanie... "/>
+                    <TextBlock Text="{Binding ProcessingStatus}"/>
+                </StackPanel>
+            </StatusBarItem>
+        </StatusBar>
     </Grid>
 </Window>
