@@ -5,16 +5,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
+using System.Windows.Media.Imaging;
 
 namespace PictureManager
 {
     public class ImageModel : INotifyPropertyChanged
     {
         private bool isProcessing;
-        private Image image;
+        private BitmapImage image;
 
         public String ImagePath { get; set; }
-        public Image Image { 
+        public BitmapImage Image
+        { 
             get 
             {
                 return image;
@@ -38,7 +40,7 @@ namespace PictureManager
             }
         }
 
-        public ImageModel(Image image, String imagePath, bool isProcessing)
+        public ImageModel(BitmapImage image, String imagePath, bool isProcessing)
         {
             this.image = image;
             this.isProcessing = isProcessing;

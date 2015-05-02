@@ -1,8 +1,9 @@
 ﻿<Window x:Class="PictureManager.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:ctr="clr-namespace:PictureManager.Spinner"
-        Title="MainWindow" Height="274" Width="696">
+        Title="MainWindow" Height="271" Width="880">
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
@@ -10,17 +11,36 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="35"/>
+            <RowDefinition Height="40"/>
             <RowDefinition Height="1*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid Grid.Row="0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="90"/>
-            </Grid.ColumnDefinitions>
-            <TextBox Grid.Column="0" Name="txtFolderPath" MinWidth="120" Margin="5" Text="C:\Users\Mateusz\Downloads\HQ_Wallpapers_Pack\walzzz56"/>
-            <Button Grid.Column="1" Name="btnLoadFolderPath" Content="Load" MinWidth="80" Margin="5" Click="btnLoadFolderPath_Click"/>
+            <StackPanel Orientation="Horizontal" Grid.Row="0">
+                <Button Command="{Binding SelectDirectoryCommand}" MinWidth="80" Margin="5 5 25 5" Padding="5" ToolTip="Select directory to load images">
+                    Select Directory
+                </Button>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Right">
+                <Rectangle VerticalAlignment="Stretch" Width="2" Margin="5" Stroke="Gray" />
+                <Button Command="{Binding RotateCommand}" MinWidth="80" Margin="5" Padding="5" ToolTip="Rotate images at specified degrees">
+                    Rotate
+                </Button>
+                <Button Command="{Binding ScaleCommand}" MinWidth="80" Margin="5" Padding="5" ToolTip="Scale images to specified X and Y sizes">
+                    Scale
+                </Button>
+                <Button Command="{Binding ThumbnailsCommand}" MinWidth="80" Margin="5" Padding="5" ToolTip="Generate thumbnails">
+                    Thumbnails
+                </Button>
+                <Button Command="{Binding GrayscaleCommand}" MinWidth="80" Margin="5" Padding="5" ToolTip="Perform filter(grayscale)">
+                    Grayscale
+                </Button>
+                
+                <Rectangle VerticalAlignment="Stretch" Width="2" Margin="5 5 25 5" Stroke="Gray" />
+                
+                <TextBlock Text="Threads" VerticalAlignment="Center" Margin="5 5 0 5"/>
+                <xctk:IntegerUpDown Value="1" Margin="5" Maximum="32" Minimum="1" />
+            </StackPanel>
         </Grid>
         <ListView Background="Black" Grid.Row="1" ItemsSource="{Binding lstImages}" Name="lstView" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
             <ListView.ItemsPanel>
@@ -31,7 +51,7 @@
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <Grid>
-                        <Image Width="100" Height="100" Source="{Binding Image.Source}"/>
+                        <Image Width="100" Height="100" Source="{Binding Image}"/>
                         <ctr:CircularProgressBar x:Name="progressBar"
                              DockPanel.Dock="Left"
                              HorizontalAlignment="Center"
@@ -44,10 +64,13 @@
         </ListView>
         <StatusBar Grid.Row="2" >
             <StatusBarItem>
-                <StackPanel Orientation="Horizontal" >
-                    <TextBlock Text="Przetwarzanie... "/>
-                    <TextBlock Text="{Binding ProcessingStatus}"/>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Wybrany folder: " Margin="3"/>
+                    <TextBlock Text="{Binding SelectedDirectoryPath}" Margin="3"/>
                 </StackPanel>
+            </StatusBarItem>
+            <StatusBarItem HorizontalContentAlignment="Right">
+                <TextBlock Text="{Binding ProcessingStatus}" Margin="3"/>
             </StatusBarItem>
         </StatusBar>
     </Grid>
