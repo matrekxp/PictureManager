@@ -108,6 +108,9 @@ namespace PictureManager
                     bitmapImage.EndInit();
                     bitmapImage.Freeze();
                     Dispatcher.Invoke(((Action)(() => imageModel.Image = bitmapImage)));
+
+                    int processedImagesCount = lstImages.Count(im => !im.IsProcessing);
+                    ProcessingStatus = "Przetwarzanie... " + processedImagesCount + " z " + lstImages.Count + " wszystkich plików";
                 }
             }
         }
