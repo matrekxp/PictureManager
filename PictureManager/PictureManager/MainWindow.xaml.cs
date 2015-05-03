@@ -45,6 +45,7 @@ namespace PictureManager
                 RaisePropertyChanged("ProcessingStatus");
             }
         }
+        private String _processedDirectoryPath;
         private String _selectedDirectoryPath;
         public String SelectedDirectoryPath
         {
@@ -55,6 +56,7 @@ namespace PictureManager
             set
             {
                 _selectedDirectoryPath = value;
+                _processedDirectoryPath = _selectedDirectoryPath + "/processed";
                 RaisePropertyChanged("SelectedDirectoryPath");
             }
         }
@@ -67,18 +69,20 @@ namespace PictureManager
         private readonly BackgroundWorker _processingImagesWorker = new BackgroundWorker();
         private readonly BackgroundWorker _mpiWorker = new BackgroundWorker();
 
-        private Queue<String> processedImagePaths = new Queue<string>();
+        private Queue<ImageModel> processedImages = new Queue<ImageModel>();
 
         public MainWindow()
         {
             lstImages = new ObservableCollection<ImageModel>();
             this.DataContext = this;
             
-            _loadImagesWorker.DoWork += worker_DoWork;
+            _loadImagesWorker.DoWork += loadImagesWorker_DoWork;
             _loadImagesWorker.RunWorkerCompleted += _runWorkerCompleted;
 
             _processingImagesWorker.DoWork += _processingImagesWorker_DoWork;
             _processingImagesWorker.RunWorkerCompleted += _runWorkerCompleted;
+
+            _mpiWorker.DoWork += _mpiWorker_DoWork;
 
             SelectDirectoryCommand = new DelegateCommand(SelectDirectory);
             ScaleCommand = new DelegateCommand(PerformScale);
@@ -91,16 +95,15 @@ namespace PictureManager
 
         private void _processingImagesWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            while(_isProcessing || processedImagePaths.Count != 0)
+            while(_isProcessing || processedImages.Count != 0)
             {
-                if(processedImagePaths.Count != 0) {
-                    String imagePath = processedImagePaths.Dequeue();
-                    ImageModel imageModel = lstImages.Single(im => im.ImagePath == imagePath);
+                if(processedImages.Count != 0) {
+                    ImageModel imageModel = processedImages.Dequeue();
 
                     imageModel.IsProcessing = false;
                     BitmapImage bitmapImage = new BitmapImage();
                     bitmapImage.BeginInit();
-                    bitmapImage.UriSource = new Uri(imagePath + "processed");
+                    bitmapImage.UriSource = new Uri(imageModel.ImageProcessedPath);
                     bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
                     bitmapImage.EndInit();
                     bitmapImage.Freeze();
@@ -144,21 +147,7 @@ namespace PictureManager
             GrayscaleCommand.IsEnabled = isEnabled;
         }
 
-        //private void InitMPI()
-        //{
-        //    string[] args = Environment.GetCommandLineArgs();
-        //    using (new MPI.Environment(ref args))
-        //    {
-
-        //        Console.WriteLine("Hello, World! from rank " + MPI.Communicator.world.Rank
-        //          + " (running on " + MPI.Environment.ProcessorName + ")");
-        //        if (MPI.Communicator.world.Rank != 0)
-        //        {
-        //            this.Visibility = System.Windows.Visibility.Hidden;
-        //        }
-        //    }
-            
-        //}
+        
 
         protected void RaisePropertyChanged(string propertyName)
         {
@@ -168,25 +157,13 @@ namespace PictureManager
             }
         }
 
-        private void worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        private void loadImagesWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            
-
-            if (lstImages.Count - 1 == e.ProgressPercentage)
-            {
-                ProcessingStatus = "Ostatnia operacja trwała: " + 2.466 + "s";
-            }
-        }
-
-        private void worker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            
-
             for(int i=0; i < lstImages.Count; i++)
             {
                 lstImages.ElementAt(i).IsProcessing = false;
 
-                BitmapImage bitmapImage = new BitmapImage(new Uri(lstImages.ElementAt(i).ImagePath));
+                BitmapImage bitmapImage = new BitmapImage(new Uri(lstImages.ElementAt(i).ImageBasePath));
                 bitmapImage.Freeze();
                 Dispatcher.Invoke(((Action)(() => lstImages.ElementAt(i).Image = bitmapImage)));
 
@@ -194,63 +171,53 @@ namespace PictureManager
 
                 Thread.Sleep(75);
             }
-
-
-            //var proc = new Process
-            //{
-            //    StartInfo = new ProcessStartInfo
-            //    {
-            //        FileName = "mpiexec",
-            //        Arguments = "-n 8 PingPong.exe",
-            //        UseShellExecute = false,
-            //        RedirectStandardOutput = true,
-            //        CreateNoWindow = true
-            //    }
-            //};
-
-            //proc.Start();
-
-            //while (!proc.StandardOutput.EndOfStream)
-            //{
-            //    string line = proc.StandardOutput.ReadLine();
-            //    Console.WriteLine(line);
-            //}
         }
 
-        private void PerformGrayscale()
+        
+
+        private void _mpiWorker_DoWork(object sender, DoWorkEventArgs e)
         {
+            var proc = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "mpiexec",
+                    Arguments = "-n 8 ..\\..\\..\\ImageProcessor\\bin\\Debug\\ImageProcessor.exe",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true
+                }
+            };
+
+            proc.Start();
+
+            while (!proc.StandardOutput.EndOfStream)
+            {
+                String []processingInfo = proc.StandardOutput.ReadLine().Split('$');
+                String baseFilePath = processingInfo[0];
+                String processedFilePath = processingInfo[1];
+
+                ImageModel imageModel = lstImages.Single(im => im.ImageBasePath == baseFilePath);
+                imageModel.ImageProcessedPath = processedFilePath;
+
+                processedImages.Enqueue(imageModel);
+
+                Console.WriteLine(baseFilePath + " " + processedFilePath);
+            }
+
+            _isProcessing = false;
+        }
+
+        private void InitControlsBeforeProcessing()
+        {
+            ChangeButtonsState(false);
             for (int i = 0; i < lstImages.Count; i++)
             {
                 lstImages.ElementAt(i).IsProcessing = true;
                 lstImages.ElementAt(i).Image = null;
             }
-
-            _isProcessing = true;
-            _processingImagesWorker.RunWorkerAsync();
-
-
-            Thread thread = new Thread(new ThreadStart(WorkThreadFunction));
-            thread.Start();
         }
-        //int proc = 0;
-        private void WorkThreadFunction()
-        {
-            for (int i = 0; i < lstImages.Count; i++)
-            {
-                using (System.Drawing.Image img = System.Drawing.Image.FromFile(lstImages.ElementAt(i).ImagePath))
-                {
-                    img.RotateFlip(RotateFlipType.Rotate90FlipNone);
-                    if (File.Exists(lstImages.ElementAt(i).ImagePath + "processed"))
-                        File.Delete(lstImages.ElementAt(i).ImagePath + "processed");
-                    img.Save(lstImages.ElementAt(i).ImagePath + "processed", System.Drawing.Imaging.ImageFormat.Jpeg);
-                    lstImages.ElementAt(i).ImagePath = lstImages.ElementAt(i).ImagePath + "processed";
-                }
-                processedImagePaths.Enqueue(lstImages.ElementAt(i).ImagePath);
-                Thread.Sleep(75);
-            }
- 
-            _isProcessing = false;
-        }
+
 
         private void PerformThumbnails()
         {
@@ -259,12 +226,21 @@ namespace PictureManager
 
         private void PerformRotation()
         {
-            throw new NotImplementedException();
+            InitControlsBeforeProcessing();
+
+            _isProcessing = true;
+            _mpiWorker.RunWorkerAsync();
+            _processingImagesWorker.RunWorkerAsync();
         }
 
         private void PerformScale()
         {
             throw new NotImplementedException();
+        }
+
+        private void PerformGrayscale()
+        {
+
         }
     }
 }

@@ -14,7 +14,8 @@ namespace PictureManager
         private bool isProcessing;
         private BitmapImage image;
 
-        public String ImagePath { get; set; }
+        public String ImageBasePath { get; set; }
+        public String ImageProcessedPath { get; set; }
         public BitmapImage Image
         { 
             get 
@@ -44,7 +45,7 @@ namespace PictureManager
         {
             this.image = image;
             this.isProcessing = isProcessing;
-            this.ImagePath = imagePath;
+            this.ImageBasePath = imagePath;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
