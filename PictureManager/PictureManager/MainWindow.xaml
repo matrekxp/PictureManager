@@ -23,6 +23,7 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Right">
                 <Rectangle VerticalAlignment="Stretch" Width="2" Margin="5" Stroke="Gray" />
+               
                 <Button Command="{Binding RotateCommand}" MinWidth="80" Margin="5" Padding="5" ToolTip="Rotate images at specified degrees">
                     Rotate
                 </Button>
@@ -39,7 +40,8 @@
                 <Rectangle VerticalAlignment="Stretch" Width="2" Margin="5 5 25 5" Stroke="Gray" />
                 
                 <TextBlock Text="Threads" VerticalAlignment="Center" Margin="5 5 0 5"/>
-                <xctk:IntegerUpDown Value="1" Margin="5" Maximum="32" Minimum="1" />
+                <xctk:IntegerUpDown Value="{Binding ThreadsCount, Mode=TwoWay}" Margin="5" Maximum="32" Minimum="1" />
+                <CheckBox Content="Draw after all processed" VerticalAlignment="Center" Margin="3px"/>
             </StackPanel>
         </Grid>
         <ListView Background="Black" Grid.Row="1" ItemsSource="{Binding lstImages}" Name="lstView" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >
@@ -50,7 +52,7 @@
             </ListView.ItemsPanel>
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <Grid>
+                    <Grid Margin="2px">
                         <Image Width="100" Height="100" Source="{Binding Image}"/>
                         <ctr:CircularProgressBar x:Name="progressBar"
                              DockPanel.Dock="Left"

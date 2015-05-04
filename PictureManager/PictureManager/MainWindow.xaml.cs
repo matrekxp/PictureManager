@@ -60,6 +60,19 @@ namespace PictureManager
                 RaisePropertyChanged("SelectedDirectoryPath");
             }
         }
+        private int _threadsCount = 1;
+        public int ThreadsCount
+        {
+            get
+            {
+                return _threadsCount;
+            }
+            set
+            {
+                _threadsCount = value;
+            }
+        }
+
 
         private bool _isProcessing;
 
@@ -101,18 +114,26 @@ namespace PictureManager
                     ImageModel imageModel = processedImages.Dequeue();
 
                     imageModel.IsProcessing = false;
-                    BitmapImage bitmapImage = new BitmapImage();
-                    bitmapImage.BeginInit();
-                    bitmapImage.UriSource = new Uri(imageModel.ImageProcessedPath);
-                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmapImage.EndInit();
-                    bitmapImage.Freeze();
+                    BitmapImage bitmapImage = LoadBitmapImage(imageModel.ImageProcessedPath);
                     Dispatcher.Invoke(((Action)(() => imageModel.Image = bitmapImage)));
 
                     int processedImagesCount = lstImages.Count(im => !im.IsProcessing);
                     ProcessingStatus = "Przetwarzanie... " + processedImagesCount + " z " + lstImages.Count + " wszystkich plików";
                 }
+
             }
+        }
+
+        private static BitmapImage LoadBitmapImage(String imagePath)
+        {
+            BitmapImage bitmapImage = new BitmapImage();
+            bitmapImage.BeginInit();
+            bitmapImage.DecodePixelHeight = bitmapImage.DecodePixelWidth = 100;
+            bitmapImage.UriSource = new Uri(imagePath);
+            bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+            bitmapImage.EndInit();
+            bitmapImage.Freeze();
+            return bitmapImage;
         }
 
         private void _runWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -166,13 +187,12 @@ namespace PictureManager
             {
                 lstImages.ElementAt(i).IsProcessing = false;
 
-                BitmapImage bitmapImage = new BitmapImage(new Uri(lstImages.ElementAt(i).ImageBasePath));
-                bitmapImage.Freeze();
+                BitmapImage bitmapImage = LoadBitmapImage(lstImages.ElementAt(i).ImageBasePath);
                 Dispatcher.Invoke(((Action)(() => lstImages.ElementAt(i).Image = bitmapImage)));
 
                 ProcessingStatus = "Przetwarzanie... " + (i + 1) + " z " + lstImages.Count + " wszystkich plików";
 
-                Thread.Sleep(75);
+                Thread.Sleep(10);
             }
         }
 
@@ -185,7 +205,7 @@ namespace PictureManager
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = "mpiexec",
-                    Arguments = "-n 8 ..\\..\\..\\ImageProcessor\\bin\\Debug\\ImageProcessor.exe",
+                    Arguments = "-n " + _threadsCount + " ..\\..\\..\\ImageProcessor\\bin\\Debug\\ImageProcessor.exe",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     CreateNoWindow = true
@@ -193,10 +213,10 @@ namespace PictureManager
             };
 
             proc.Start();
-
             while (!proc.StandardOutput.EndOfStream)
             {
-                String []processingInfo = proc.StandardOutput.ReadLine().Split('$');
+                String line = proc.StandardOutput.ReadLine();
+                String[] processingInfo = line.Split('$');
                 String baseFilePath = processingInfo[0];
                 String processedFilePath = processingInfo[1];
 
