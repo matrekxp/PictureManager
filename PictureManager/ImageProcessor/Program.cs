@@ -1,5 +1,7 @@
-﻿using System;
+﻿using MPI;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -13,6 +15,8 @@ namespace ImageProcessor
     {
         private static String _selectedDirectoryPath = "C:\\Users\\Mateusz\\Downloads\\HQ_Wallpapers_Pack\\walzzz56";
         private static String _processedDirectoryPath = "C:\\Users\\Mateusz\\Downloads\\HQ_Wallpapers_Pack\\walzzz56\\processed";
+
+        private static String _resultFileName = "Results.txt";
 
         static void Main(string[] args)
         {
@@ -34,9 +38,12 @@ namespace ImageProcessor
             int imagesPerTask = lstImages.Count / MPI.Communicator.world.Size;
             int startIndex = MPI.Communicator.world.Rank * imagesPerTask;
             
-
             if (!Directory.Exists(_processedDirectoryPath))
                 Directory.CreateDirectory(_processedDirectoryPath);
+
+            Intracommunicator comm = Communicator.world;
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
 
             for (int i = startIndex; i < startIndex + imagesPerTask; i++)
             {
@@ -67,6 +74,22 @@ namespace ImageProcessor
                         File.Delete(_processedDirectoryPath + "/" + imageFileName + (--nextFileIndex) + ".jpg");
 
                     Console.WriteLine(fileName + "$" + processedFilePath);
+                }
+            }
+
+            comm.Barrier();
+            sw.Stop();
+            if (comm.Rank == 0)
+            {
+                Console.WriteLine("{0:s\\.fffff}", sw.Elapsed);
+
+                using (StreamWriter writer = File.AppendText(_resultFileName))
+                {
+                    if (new FileInfo(_resultFileName).Length == 0)
+                    {
+                        writer.WriteLine("Time\tThreads");
+                    }
+                    writer.WriteLine("{0:ss\\.fffff}\t{1}", sw.Elapsed, MPI.Communicator.world.Size);
                 }
             }
         }

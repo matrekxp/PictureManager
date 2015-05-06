@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -73,7 +74,7 @@ namespace PictureManager
             }
         }
 
-
+        private double _lastTimeExecution;
         private bool _isProcessing;
 
         public ObservableCollection<ImageModel> lstImages { get; set; }
@@ -139,7 +140,7 @@ namespace PictureManager
         private void _runWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             ChangeButtonsState(true);
-            ProcessingStatus = "Ostatnia operacja trwała: " + 2.466 + "s";
+            ProcessingStatus = "Ostatnia operacja trwała: " + _lastTimeExecution + "s";
         }
 
         private void SelectDirectory()
@@ -216,6 +217,12 @@ namespace PictureManager
             while (!proc.StandardOutput.EndOfStream)
             {
                 String line = proc.StandardOutput.ReadLine();
+                if (!line.Contains("$"))
+                {
+                    _lastTimeExecution = double.Parse(line, CultureInfo.InvariantCulture);
+                    break;
+                }
+                    
                 String[] processingInfo = line.Split('$');
                 String baseFilePath = processingInfo[0];
                 String processedFilePath = processingInfo[1];
