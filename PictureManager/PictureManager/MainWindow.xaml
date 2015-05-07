@@ -52,7 +52,7 @@
             </ListView.ItemsPanel>
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <Grid Margin="2px">
+                    <Grid Margin="2px" ToolTip="{Binding ImageBasePath}">
                         <Image Width="100" Height="100" Source="{Binding Image}"/>
                         <ctr:CircularProgressBar x:Name="progressBar"
                              DockPanel.Dock="Left"

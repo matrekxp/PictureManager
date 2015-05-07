@@ -13,13 +13,15 @@ namespace ImageProcessor
 {
     class Program
     {
-        private static String _selectedDirectoryPath = "C:\\Users\\Mateusz\\Downloads\\HQ_Wallpapers_Pack\\walzzz56";
-        private static String _processedDirectoryPath = "C:\\Users\\Mateusz\\Downloads\\HQ_Wallpapers_Pack\\walzzz56\\processed";
+        private static String _selectedDirectoryPath;
+        private static String _processedDirectoryPath;
 
         private static String _resultFileName = "Results.txt";
 
         static void Main(string[] args)
         {
+            _selectedDirectoryPath = args[0];
+            _processedDirectoryPath = args[1];
             using (new MPI.Environment(ref args))
             {
                 WorkThreadFunction();
@@ -28,26 +30,60 @@ namespace ImageProcessor
 
         static private void WorkThreadFunction()
         {
-            List<String> lstImages = new List<String>();
-            List<string> lstFileNames = new List<string>(System.IO.Directory.EnumerateFiles(_selectedDirectoryPath, "*.jpg"));
-            foreach (string fileName in lstFileNames)
+            Intracommunicator comm = Communicator.world;
+            int processingThreadsCount = MPI.Communicator.world.Size;
+            List<String>[] filesToThreads = new List<string>[processingThreadsCount];
+            List<String> imagesToBeProcessed = null;
+            if (comm.Rank == 0)
             {
-                lstImages.Add(fileName);
+                List<String> lstImages = new List<String>();
+                List<string> lstFileNames = new List<string>(System.IO.Directory.EnumerateFiles(_selectedDirectoryPath, "*.jpg"));
+                foreach (string fileName in lstFileNames)
+                {
+                    lstImages.Add(fileName);
+                }
+
+                for (int i = 0; i < filesToThreads.Length; i++)
+                {
+                    filesToThreads[i] = new List<string>();
+                }
+
+                int imagesPerTask = lstImages.Count / processingThreadsCount;
+                for(int i = 0; i < filesToThreads.Length; i++)
+                {
+                    for(int j=0; j < imagesPerTask; j++) 
+                    {
+                        filesToThreads[i].Add(lstImages[i * imagesPerTask + j]);
+                    }
+                }
+
+                int offset = imagesPerTask * processingThreadsCount;
+
+                for(int i=0; i < lstImages.Count % MPI.Communicator.world.Size; i++)
+                {
+                    filesToThreads[i].Add(lstImages[offset + i]);
+                }
+
+                if (!Directory.Exists(_processedDirectoryPath))
+                    Directory.CreateDirectory(_processedDirectoryPath);
             }
 
-            int imagesPerTask = lstImages.Count / MPI.Communicator.world.Size;
-            int startIndex = MPI.Communicator.world.Rank * imagesPerTask;
-            
-            if (!Directory.Exists(_processedDirectoryPath))
-                Directory.CreateDirectory(_processedDirectoryPath);
+            if(comm.Rank == 0) 
+                imagesToBeProcessed = comm.Scatter<List<String>>(filesToThreads);
+            else
+                imagesToBeProcessed = comm.Scatter<List<String>>(0);
 
-            Intracommunicator comm = Communicator.world;
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
+            Stopwatch sw = null;
+            comm.Barrier();
+            if(comm.Rank == 0)
+            { 
+                sw = new Stopwatch();
+                sw.Start();
+            }
 
-            for (int i = startIndex; i < startIndex + imagesPerTask; i++)
+            foreach(String image in imagesToBeProcessed)
             {
-                String fileName = lstImages.ElementAt(i);
+                String fileName = image;
                 String imageFileName = fileName.Split('\\').Last();
                 imageFileName = imageFileName.Split('.').First();
                 String[] currentlyProcessedFiles = Directory.GetFiles(_processedDirectoryPath, imageFileName + "*");
@@ -78,16 +114,17 @@ namespace ImageProcessor
             }
 
             comm.Barrier();
-            sw.Stop();
             if (comm.Rank == 0)
             {
+                sw.Stop();
+            
                 Console.WriteLine("{0:s\\.fffff}", sw.Elapsed);
 
                 using (StreamWriter writer = File.AppendText(_resultFileName))
                 {
                     if (new FileInfo(_resultFileName).Length == 0)
                     {
-                        writer.WriteLine("Time\tThreads");
+                        writer.WriteLine("Time\t\tThreads");
                     }
                     writer.WriteLine("{0:ss\\.fffff}\t{1}", sw.Elapsed, MPI.Communicator.world.Size);
                 }

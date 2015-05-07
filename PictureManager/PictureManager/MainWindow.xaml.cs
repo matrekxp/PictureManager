@@ -9,6 +9,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -147,7 +148,7 @@ namespace PictureManager
         {
             //var dialog = new System.Windows.Forms.FolderBrowserDialog();
             //System.Windows.Forms.DialogResult result = dialog.ShowDialog();
-            SelectedDirectoryPath = "C:\\Users\\Mateusz\\Downloads\\HQ_Wallpapers_Pack\\walzzz56";
+            SelectedDirectoryPath = "E:\\HQ_Wallpapers_Pack\\walzzz56";
             //if (result == System.Windows.Forms.DialogResult.OK)
            // { 
                 lstImages.Clear();
@@ -206,7 +207,8 @@ namespace PictureManager
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = "mpiexec",
-                    Arguments = "-n " + _threadsCount + " ..\\..\\..\\ImageProcessor\\bin\\Debug\\ImageProcessor.exe",
+                    Arguments = "-n " + _threadsCount + " ..\\..\\..\\ImageProcessor\\bin\\Debug\\ImageProcessor.exe " +
+                    _selectedDirectoryPath + " " + _processedDirectoryPath,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     CreateNoWindow = true
@@ -222,7 +224,7 @@ namespace PictureManager
                     _lastTimeExecution = double.Parse(line, CultureInfo.InvariantCulture);
                     break;
                 }
-                    
+
                 String[] processingInfo = line.Split('$');
                 String baseFilePath = processingInfo[0];
                 String processedFilePath = processingInfo[1];
