@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:ctr="clr-namespace:PictureManager.Spinner"
-        Title="MainWindow" Height="271" Width="880">
+        Title="Picture Manager by Mateusz and Karol" Height="271" Width="1050" WindowState="Maximized">
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
@@ -36,12 +36,23 @@
                 <Button Command="{Binding GrayscaleCommand}" MinWidth="80" Margin="5" Padding="5" ToolTip="Perform filter(grayscale)">
                     Grayscale
                 </Button>
+                <Button Command="{Binding SepiaCommand}" MinWidth="80" Margin="5" Padding="5" ToolTip="Perform filter(sepia)">
+                    Sepia
+                </Button>
+                <Button Command="{Binding InvertCommand}" MinWidth="80" Margin="5" Padding="5" ToolTip="Perform filter(invert)">
+                    Invert
+                </Button>
                 
                 <Rectangle VerticalAlignment="Stretch" Width="2" Margin="5 5 25 5" Stroke="Gray" />
-                
+                <Button Command="{Binding OpenSelectedDirectoryCommand}" Margin="5 4" ToolTip="Settings">
+                    <Image Source="open_folder.png"/>
+                </Button>
+                <Button Command="{Binding OpenSettingsCommand}" Margin="0 4" ToolTip="Settings">
+                    <Image Source="preferences_system.png"/>
+                </Button>
                 <TextBlock Text="Threads" VerticalAlignment="Center" Margin="5 5 0 5"/>
                 <xctk:IntegerUpDown Value="{Binding ThreadsCount, Mode=TwoWay}" Margin="5" Maximum="32" Minimum="1" />
-                <CheckBox Content="Draw after all processed" VerticalAlignment="Center" Margin="3px"/>
+                <CheckBox Content="Gather and draw" VerticalAlignment="Center" Margin="3px"/>
             </StackPanel>
         </Grid>
         <ListView Background="Black" Grid.Row="1" ItemsSource="{Binding lstImages}" Name="lstView" ScrollViewer.HorizontalScrollBarVisibility="Disabled" >

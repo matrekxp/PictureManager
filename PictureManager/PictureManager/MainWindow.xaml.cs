@@ -31,6 +31,10 @@ namespace PictureManager
         public DelegateCommand RotateCommand { get; private set; }
         public DelegateCommand ThumbnailsCommand { get; private set; }
         public DelegateCommand GrayscaleCommand { get; private set; }
+        public DelegateCommand SepiaCommand { get; private set; }
+        public DelegateCommand InvertCommand { get; private set; }
+        public DelegateCommand OpenSettingsCommand { get; private set; }
+        public DelegateCommand OpenSelectedDirectoryCommand { get; private set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -75,7 +79,9 @@ namespace PictureManager
             }
         }
 
-        private double _lastTimeExecution;
+        private RotateFlipType _rotationFlipType = RotateFlipType.Rotate180FlipNone;
+
+        private string _lastTimeExecution = "00:00:00";
         private bool _isProcessing;
 
         public ObservableCollection<ImageModel> lstImages { get; set; }
@@ -104,6 +110,13 @@ namespace PictureManager
             RotateCommand = new DelegateCommand(PerformRotation);
             ThumbnailsCommand = new DelegateCommand(PerformThumbnails);
             GrayscaleCommand = new DelegateCommand(PerformGrayscale);
+            SepiaCommand = new DelegateCommand(PerformSepia);
+            InvertCommand = new DelegateCommand(PerformInvert);
+            OpenSettingsCommand = new DelegateCommand(OpenSettings);
+            OpenSelectedDirectoryCommand = new DelegateCommand(OpenSelectedDirectory);
+   
+            OpenSelectedDirectoryCommand.IsEnabled = false;
+            ChangeActionButtonsState(false);
 
             InitializeComponent();
         }
@@ -148,9 +161,13 @@ namespace PictureManager
         {
             //var dialog = new System.Windows.Forms.FolderBrowserDialog();
             //System.Windows.Forms.DialogResult result = dialog.ShowDialog();
-            SelectedDirectoryPath = "E:\\HQ_Wallpapers_Pack\\walzzz56";
+            SelectedDirectoryPath = "E:\\HQ_Wallpapers_Pack\\dev";
             //if (result == System.Windows.Forms.DialogResult.OK)
            // { 
+            if (Directory.Exists(_processedDirectoryPath))
+                Directory.Delete(_processedDirectoryPath, true);
+            OpenSelectedDirectoryCommand.IsEnabled = true;
+
                 lstImages.Clear();
                 List<string> lstFileNames = new List<string>(System.IO.Directory.EnumerateFiles(SelectedDirectoryPath, "*.jpg"));
                 foreach (string fileName in lstFileNames)
@@ -167,13 +184,18 @@ namespace PictureManager
         private void ChangeButtonsState(bool isEnabled)
         {
             SelectDirectoryCommand.IsEnabled = isEnabled;
+            ChangeActionButtonsState(isEnabled);
+        }
+
+        private void ChangeActionButtonsState(bool isEnabled)
+        {
             ScaleCommand.IsEnabled = isEnabled;
             RotateCommand.IsEnabled = isEnabled;
             ThumbnailsCommand.IsEnabled = isEnabled;
             GrayscaleCommand.IsEnabled = isEnabled;
+            SepiaCommand.IsEnabled = isEnabled;
+            InvertCommand.IsEnabled = isEnabled;
         }
-
-        
 
         protected void RaisePropertyChanged(string propertyName)
         {
@@ -198,8 +220,6 @@ namespace PictureManager
             }
         }
 
-        
-
         private void _mpiWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             var proc = new Process
@@ -208,7 +228,7 @@ namespace PictureManager
                 {
                     FileName = "mpiexec",
                     Arguments = "-n " + _threadsCount + " ..\\..\\..\\ImageProcessor\\bin\\Debug\\ImageProcessor.exe " +
-                    _selectedDirectoryPath + " " + _processedDirectoryPath,
+                    _selectedDirectoryPath + " " + _processedDirectoryPath + " " + e.Argument,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     CreateNoWindow = true
@@ -221,7 +241,7 @@ namespace PictureManager
                 String line = proc.StandardOutput.ReadLine();
                 if (!line.Contains("$"))
                 {
-                    _lastTimeExecution = double.Parse(line, CultureInfo.InvariantCulture);
+                    _lastTimeExecution = line;
                     break;
                 }
 
@@ -233,8 +253,6 @@ namespace PictureManager
                 imageModel.ImageProcessedPath = processedFilePath;
 
                 processedImages.Enqueue(imageModel);
-
-                Console.WriteLine(baseFilePath + " " + processedFilePath);
             }
 
             _isProcessing = false;
@@ -250,29 +268,60 @@ namespace PictureManager
             }
         }
 
-
         private void PerformThumbnails()
         {
-            throw new NotImplementedException();
+            InitControlsBeforeProcessing();
+            RunImageAction("thumbnails");
         }
 
         private void PerformRotation()
         {
             InitControlsBeforeProcessing();
+            RunImageAction("rotate " + _rotationFlipType);
+        }
 
+        private void RunImageAction(string action)
+        {
             _isProcessing = true;
-            _mpiWorker.RunWorkerAsync();
+            _mpiWorker.RunWorkerAsync(action);
             _processingImagesWorker.RunWorkerAsync();
         }
 
         private void PerformScale()
         {
-            throw new NotImplementedException();
+            InitControlsBeforeProcessing();
+            RunImageAction("scale");
         }
 
         private void PerformGrayscale()
         {
+            InitControlsBeforeProcessing();
+            RunImageAction("grayscale");
+        }
 
+        private void PerformSepia()
+        {
+            InitControlsBeforeProcessing();
+            RunImageAction("sepia");
+        }
+
+        private void PerformInvert()
+        {
+            InitControlsBeforeProcessing();
+            RunImageAction("invert");
+        }
+
+        private void OpenSettings()
+        {
+            Settings settings = new Settings();
+            settings.ShowDialog();
+
+            _rotationFlipType = settings.SelectedRotateType;
+        }
+
+        private void OpenSelectedDirectory()
+        {
+            Process.Start(@_selectedDirectoryPath);
         }
     }
 }

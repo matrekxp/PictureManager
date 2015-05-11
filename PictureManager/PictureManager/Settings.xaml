@@ -1,0 +1,59 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ctr="clr-namespace:PictureManager"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="PictureManager.Settings"
+        Title="Settings" Height="Auto" Width="355.925px" ResizeMode="NoResize">
+    <Grid Width="Auto">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Orientation="Vertical" Grid.RowSpan="2" Grid.Column="0" Width="Auto">
+            <GroupBox Header="Rotation type" Margin="8">
+                <StackPanel Orientation="Vertical" >
+                    <ctr:EnumRadioButton EnumBinding="{Binding SelectedRotateType, Mode=TwoWay}" EnumValue="Rotate180FlipNone" Margin="4" Content="Rotate180FlipNone"/>
+                    <ctr:EnumRadioButton EnumBinding="{Binding SelectedRotateType, Mode=TwoWay}" EnumValue="Rotate180FlipX" Margin="4" Content="Rotate180FlipX"/>
+                    <ctr:EnumRadioButton EnumBinding="{Binding SelectedRotateType, Mode=TwoWay}" EnumValue="Rotate180FlipXY" Margin="4" Content="Rotate180FlipXY"/>
+                    <ctr:EnumRadioButton EnumBinding="{Binding SelectedRotateType, Mode=TwoWay}" EnumValue="Rotate180FlipY" Margin="4" Content="Rotate180FlipY"/>
+                    <ctr:EnumRadioButton EnumBinding="{Binding SelectedRotateType, Mode=TwoWay}" EnumValue="Rotate270FlipNone" Margin="4" Content="Rotate270FlipNone"/>
+                    <ctr:EnumRadioButton EnumBinding="{Binding SelectedRotateType, Mode=TwoWay}" EnumValue="Rotate270FlipX" Margin="4" Content="Rotate270FlipX"/>
+                    <ctr:EnumRadioButton EnumBinding="{Binding SelectedRotateType, Mode=TwoWay}" EnumValue="Rotate270FlipXY" Margin="4" Content="Rotate270FlipXY"/>
+                    <ctr:EnumRadioButton EnumBinding="{Binding SelectedRotateType, Mode=TwoWay}" EnumValue="Rotate270FlipY" Margin="4" Content="Rotate270FlipY"/>
+                    <ctr:EnumRadioButton EnumBinding="{Binding SelectedRotateType, Mode=TwoWay}" EnumValue="Rotate90FlipNone" Margin="4" Content="Rotate90FlipNone"/>
+                    <ctr:EnumRadioButton EnumBinding="{Binding SelectedRotateType, Mode=TwoWay}" EnumValue="Rotate90FlipX" Margin="4" Content="Rotate90FlipX"/>
+                    <ctr:EnumRadioButton EnumBinding="{Binding SelectedRotateType, Mode=TwoWay}" EnumValue="Rotate90FlipXY" Margin="4" Content="Rotate90FlipXY"/>
+                    <ctr:EnumRadioButton EnumBinding="{Binding SelectedRotateType, Mode=TwoWay}" EnumValue="Rotate90FlipY" Margin="4" Content="Rotate90FlipY"/>
+                    <ctr:EnumRadioButton EnumBinding="{Binding SelectedRotateType, Mode=TwoWay}" EnumValue="RotateNoneFlipNone" Margin="4" Content="RotateNoneFlipNone"/>
+                    <ctr:EnumRadioButton EnumBinding="{Binding SelectedRotateType, Mode=TwoWay}" EnumValue="RotateNoneFlipX" Margin="4" Content="RotateNoneFlipX"/>
+                    <ctr:EnumRadioButton EnumBinding="{Binding SelectedRotateType, Mode=TwoWay}" EnumValue="RotateNoneFlipXY" Margin="4" Content="RotateNoneFlipXY"/>
+                    <ctr:EnumRadioButton EnumBinding="{Binding SelectedRotateType, Mode=TwoWay}" EnumValue="RotateNoneFlipY" Margin="4" Content="RotateNoneFlipY"/>
+                </StackPanel>
+            </GroupBox>
+        </StackPanel>
+
+        <StackPanel Orientation="Vertical" Grid.Column="1" Width="Auto" Grid.Row="0" Grid.RowSpan="2">
+            <GroupBox Header="Scale" Margin="15">
+                <StackPanel>
+                    <TextBlock Margin="5"><Run Text="Percentage %"/></TextBlock>
+                    <TextBox TextAlignment="Center" Text="100"/>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="Thumbnails" Margin="15">
+                <StackPanel>
+                    <TextBlock Margin="5"><Run Text="Max width"/></TextBlock>
+                    <TextBox TextAlignment="Center" Text="100"/>
+                    <TextBlock Margin="5 10 5 5"><Run Text="Max height"/></TextBlock>
+                    <TextBox TextAlignment="Center" Text="100"/>
+                </StackPanel>
+            </GroupBox>
+        </StackPanel>
+        <TextBlock HorizontalAlignment="Center" Margin="10 0" Grid.Row="2" Grid.ColumnSpan="2" Text="Important! Previously selected rotate type isn't not reflected!" Foreground="Red"/>
+        <Button Click="Submit" Content="Submit" Width="100px" Margin="20px" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"/>
+    </Grid>
+</Window>
