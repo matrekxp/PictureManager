@@ -35,6 +35,7 @@ namespace PictureManager
         public DelegateCommand InvertCommand { get; private set; }
         public DelegateCommand OpenSettingsCommand { get; private set; }
         public DelegateCommand OpenSelectedDirectoryCommand { get; private set; }
+        public DelegateCommand AboutCommand { get; private set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -79,12 +80,14 @@ namespace PictureManager
             }
         }
 
+        public Boolean GatherResults { get; set; }
+
         private RotateFlipType _rotationFlipType = RotateFlipType.Rotate180FlipNone;
         private String _scale = "100";
         private String _maxWidth = "100";
         private String _maxHeight = "100";
 
-        private string _lastTimeExecution = "00:00:00";
+        private string _lastTimeExecution = "";
         private bool _isProcessing;
 
         public ObservableCollection<ImageModel> lstImages { get; set; }
@@ -117,6 +120,7 @@ namespace PictureManager
             InvertCommand = new DelegateCommand(PerformInvert);
             OpenSettingsCommand = new DelegateCommand(OpenSettings);
             OpenSelectedDirectoryCommand = new DelegateCommand(OpenSelectedDirectory);
+            AboutCommand = new DelegateCommand(About);
    
             OpenSelectedDirectoryCommand.IsEnabled = false;
             ChangeActionButtonsState(false);
@@ -157,19 +161,23 @@ namespace PictureManager
         private void _runWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             ChangeButtonsState(true);
-            ProcessingStatus = "Last operation lasted: " + _lastTimeExecution + "s";
+            if (_lastTimeExecution == "")
+                ProcessingStatus = "Ready to perform actions";
+            else
+                ProcessingStatus = "Last operation lasted: " + _lastTimeExecution + "s";
         }
 
         private void SelectDirectory()
         {
-            //var dialog = new System.Windows.Forms.FolderBrowserDialog();
-            //System.Windows.Forms.DialogResult result = dialog.ShowDialog();
-            SelectedDirectoryPath = "E:\\HQ_Wallpapers_Pack\\dev";
-            //if (result == System.Windows.Forms.DialogResult.OK)
-           // { 
-            if (Directory.Exists(_processedDirectoryPath))
-                Directory.Delete(_processedDirectoryPath, true);
-            OpenSelectedDirectoryCommand.IsEnabled = true;
+            var dialog = new System.Windows.Forms.FolderBrowserDialog();
+            System.Windows.Forms.DialogResult result = dialog.ShowDialog();
+            SelectedDirectoryPath = dialog.SelectedPath;
+            if (result == System.Windows.Forms.DialogResult.OK)
+            { 
+                if (Directory.Exists(_processedDirectoryPath))
+                    Directory.Delete(_processedDirectoryPath, true);
+
+                OpenSelectedDirectoryCommand.IsEnabled = true;
 
                 lstImages.Clear();
                 List<string> lstFileNames = new List<string>(System.IO.Directory.EnumerateFiles(SelectedDirectoryPath, "*.jpg"));
@@ -181,7 +189,7 @@ namespace PictureManager
                 ChangeButtonsState(false);
 
                 _loadImagesWorker.RunWorkerAsync();
-           // }
+            }
         }
 
         private void ChangeButtonsState(bool isEnabled)
@@ -231,7 +239,7 @@ namespace PictureManager
                 {
                     FileName = "mpiexec",
                     Arguments = "-n " + _threadsCount + " ..\\..\\..\\ImageProcessor\\bin\\Debug\\ImageProcessor.exe " +
-                    _selectedDirectoryPath + " " + _processedDirectoryPath + " " + e.Argument,
+                    _selectedDirectoryPath + " " + _processedDirectoryPath + " " + GatherResults + " " + e.Argument,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     CreateNoWindow = true
@@ -245,7 +253,7 @@ namespace PictureManager
                 if (!line.Contains("$"))
                 {
                     _lastTimeExecution = line;
-                    break;
+                    continue;
                 }
 
                 String[] processingInfo = line.Split('$');
@@ -285,6 +293,7 @@ namespace PictureManager
 
         private void RunImageAction(string action)
         {
+            ProcessingStatus = "Processing... ";
             _isProcessing = true;
             _mpiWorker.RunWorkerAsync(action);
             _processingImagesWorker.RunWorkerAsync();
@@ -323,6 +332,11 @@ namespace PictureManager
             _scale = settings.Scale;
             _maxWidth = settings.ThumbnailMaxWidth;
             _maxHeight = settings.ThumbnailMaxHeight;
+        }
+
+        private void About()
+        {
+            new About().ShowDialog();
         }
 
         private void OpenSelectedDirectory()

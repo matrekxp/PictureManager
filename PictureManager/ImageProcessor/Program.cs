@@ -21,6 +21,7 @@ namespace ImageProcessor
         private static String _selectedDirectoryPath;
         private static String _processedDirectoryPath;
         private static String []_actionParameters = new String[2];
+        private static Boolean _gatherResults;
         private static String _resultFileName = "Results.txt";
 
         static void Main(string[] args)
@@ -35,14 +36,17 @@ namespace ImageProcessor
 
             _selectedDirectoryPath = args[0];
             _processedDirectoryPath = args[1];
-            string action = args[2];
-            for (int i = 3; i < args.Length; i++)
-                _actionParameters[i-3] = args[i];
-            Action<string, string> actionToPerform = actions[action];
+            _gatherResults = Boolean.Parse(args[2]);
+            string actionToPerform = args[3];
+
+            for (int i = 4; i < args.Length; i++)
+                _actionParameters[i-4] = args[i];
+
+            Action<string, string> action = actions[actionToPerform];
 
             using (new MPI.Environment(ref args))
             {
-                WorkThreadFunction(actionToPerform);
+                PerformAction(action);
             }
         }
 
@@ -91,7 +95,7 @@ namespace ImageProcessor
             ImageBuilder.Current.Build(filePathToBeProcessed, outFilePath, s);
         }
 
-        static private void WorkThreadFunction(Action<string, string> actionToPerform)
+        static private void PerformAction(Action<string, string> actionToPerform)
         {
             Intracommunicator comm = Communicator.world;
             int processingThreadsCount = MPI.Communicator.world.Size;
@@ -110,15 +114,55 @@ namespace ImageProcessor
 
             Stopwatch sw = WaitForAllThreadsAndInitStopwatch(comm);
 
-            foreach(String imagePath in imagesToBeProcessed)
-            {
-                ProcessImage(actionToPerform, imagePath);
-            }
+            List<String> results = ProcessAllImages(actionToPerform, imagesToBeProcessed);
 
             WaitForAllThreadsAndPrintOutExecutionTime(comm, sw);
+
+            if (_gatherResults)
+                GatherResultsAndPrintOut(results);
         }
 
-        private static void ProcessImage(Action<string, string> actionToPerform, String image)
+        private static List<String> ProcessAllImages(Action<string, string> actionToPerform, List<String> imagesToBeProcessed)
+        {
+            List<String> results = new List<string>();
+            foreach (String imagePath in imagesToBeProcessed)
+            {
+                String result = ProcessImage(actionToPerform, imagePath);
+                UpdateResultProgress(result, results);
+            }
+
+            return results;
+        }
+
+        private static void GatherResultsAndPrintOut(List<string> results)
+        {
+            Intracommunicator world = Communicator.world;
+            if (world.Rank == 0)
+            {
+                List<string>[] outputResults = world.Gather(results, 0);
+                for (int i = 0; i < outputResults.Length; i++)
+                    for (int j = 0; j < outputResults[i].Count; j++)
+                        System.Console.WriteLine(outputResults[i].ElementAt(j));
+            }
+            else
+            {
+                world.Gather(results, 0);
+            }
+        }
+
+        private static void UpdateResultProgress(string result, List<string> results)
+        {
+            if(_gatherResults)
+            {
+                results.Add(result);
+            }
+            else
+            {
+                Console.WriteLine(result);
+            }
+        }
+
+        private static String ProcessImage(Action<string, string> actionToPerform, String image)
         {
             String fileName = image;
             String imageFileName = fileName.Split('\\').Last();
@@ -144,7 +188,7 @@ namespace ImageProcessor
             if (nextFileIndex > 1)
                 File.Delete(_processedDirectoryPath + "/" + imageFileName + (--nextFileIndex) + ".jpg");
 
-            Console.WriteLine(fileName + "$" + processedFilePath);
+            return fileName + "$" + processedFilePath;
         }
 
         private static void WaitForAllThreadsAndPrintOutExecutionTime(Intracommunicator comm, Stopwatch sw)
@@ -154,7 +198,7 @@ namespace ImageProcessor
             {
                 sw.Stop();
 
-                Console.WriteLine("{0:mm\\:ss\\.fffff}", sw.Elapsed);
+                Console.WriteLine("{0:ss\\.fffff}", sw.Elapsed);
 
                 using (StreamWriter writer = File.AppendText(_resultFileName))
                 {
@@ -162,7 +206,7 @@ namespace ImageProcessor
                     {
                         writer.WriteLine("Time\t\tThreads");
                     }
-                    writer.WriteLine("{0:mm\\:ss\\.fffff}\t{1}", sw.Elapsed, MPI.Communicator.world.Size);
+                    writer.WriteLine("{0:ss\\.fffff}\t{1}", sw.Elapsed, MPI.Communicator.world.Size);
                 }
             }
         }
