@@ -80,6 +80,9 @@ namespace PictureManager
         }
 
         private RotateFlipType _rotationFlipType = RotateFlipType.Rotate180FlipNone;
+        private String _scale = "100";
+        private String _maxWidth = "100";
+        private String _maxHeight = "100";
 
         private string _lastTimeExecution = "00:00:00";
         private bool _isProcessing;
@@ -133,7 +136,7 @@ namespace PictureManager
                     Dispatcher.Invoke(((Action)(() => imageModel.Image = bitmapImage)));
 
                     int processedImagesCount = lstImages.Count(im => !im.IsProcessing);
-                    ProcessingStatus = "Przetwarzanie... " + processedImagesCount + " z " + lstImages.Count + " wszystkich plików";
+                    ProcessingStatus = "Processing... " + processedImagesCount + " of " + lstImages.Count + " all files";
                 }
 
             }
@@ -154,7 +157,7 @@ namespace PictureManager
         private void _runWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             ChangeButtonsState(true);
-            ProcessingStatus = "Ostatnia operacja trwała: " + _lastTimeExecution + "s";
+            ProcessingStatus = "Last operation lasted: " + _lastTimeExecution + "s";
         }
 
         private void SelectDirectory()
@@ -214,7 +217,7 @@ namespace PictureManager
                 BitmapImage bitmapImage = LoadBitmapImage(lstImages.ElementAt(i).ImageBasePath);
                 Dispatcher.Invoke(((Action)(() => lstImages.ElementAt(i).Image = bitmapImage)));
 
-                ProcessingStatus = "Przetwarzanie... " + (i + 1) + " z " + lstImages.Count + " wszystkich plików";
+                ProcessingStatus = "Processing... " + (i + 1) + " of " + lstImages.Count + " all files";
 
                 Thread.Sleep(10);
             }
@@ -271,7 +274,7 @@ namespace PictureManager
         private void PerformThumbnails()
         {
             InitControlsBeforeProcessing();
-            RunImageAction("thumbnails");
+            RunImageAction("thumbnails " + _maxWidth + " " + _maxHeight);
         }
 
         private void PerformRotation()
@@ -290,7 +293,7 @@ namespace PictureManager
         private void PerformScale()
         {
             InitControlsBeforeProcessing();
-            RunImageAction("scale");
+            RunImageAction("scale " + _scale);
         }
 
         private void PerformGrayscale()
@@ -313,10 +316,13 @@ namespace PictureManager
 
         private void OpenSettings()
         {
-            Settings settings = new Settings();
+            Settings settings = new Settings(_scale, _maxWidth, _maxHeight);
             settings.ShowDialog();
 
             _rotationFlipType = settings.SelectedRotateType;
+            _scale = settings.Scale;
+            _maxWidth = settings.ThumbnailMaxWidth;
+            _maxHeight = settings.ThumbnailMaxHeight;
         }
 
         private void OpenSelectedDirectory()

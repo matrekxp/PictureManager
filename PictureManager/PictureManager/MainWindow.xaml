@@ -44,7 +44,7 @@
                 </Button>
                 
                 <Rectangle VerticalAlignment="Stretch" Width="2" Margin="5 5 25 5" Stroke="Gray" />
-                <Button Command="{Binding OpenSelectedDirectoryCommand}" Margin="5 4" ToolTip="Settings">
+                <Button Command="{Binding OpenSelectedDirectoryCommand}" Margin="5 4" ToolTip="Open selected directory">
                     <Image Source="open_folder.png"/>
                 </Button>
                 <Button Command="{Binding OpenSettingsCommand}" Margin="0 4" ToolTip="Settings">
@@ -78,7 +78,7 @@
         <StatusBar Grid.Row="2" >
             <StatusBarItem>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Wybrany folder: " Margin="3"/>
+                    <TextBlock Text="Selected directory: " Margin="3"/>
                     <TextBlock Text="{Binding SelectedDirectoryPath}" Margin="3"/>
                 </StackPanel>
             </StatusBarItem>

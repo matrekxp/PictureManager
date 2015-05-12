@@ -18,9 +18,15 @@ namespace PictureManager
     public partial class Settings : Window
     {
         public RotateFlipType SelectedRotateType { get; set; }
+        public String Scale { get; set; }
+        public String ThumbnailMaxWidth { get; set; }
+        public String ThumbnailMaxHeight { get; set; }
 
-        public Settings()
+        public Settings(String scale, String maxWidth, String maxHeight)
         {
+            Scale = scale;
+            ThumbnailMaxWidth = maxWidth;
+            ThumbnailMaxHeight = maxHeight;
             InitializeComponent();
             DataContext = this;
         }

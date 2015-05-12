@@ -41,19 +41,19 @@
             <GroupBox Header="Scale" Margin="15">
                 <StackPanel>
                     <TextBlock Margin="5"><Run Text="Percentage %"/></TextBlock>
-                    <TextBox TextAlignment="Center" Text="100"/>
+                    <TextBox TextAlignment="Center" Text="{Binding Scale}"/>
                 </StackPanel>
             </GroupBox>
             <GroupBox Header="Thumbnails" Margin="15">
                 <StackPanel>
                     <TextBlock Margin="5"><Run Text="Max width"/></TextBlock>
-                    <TextBox TextAlignment="Center" Text="100"/>
+                    <TextBox TextAlignment="Center" Text="{Binding ThumbnailMaxWidth}"/>
                     <TextBlock Margin="5 10 5 5"><Run Text="Max height"/></TextBlock>
-                    <TextBox TextAlignment="Center" Text="100"/>
+                    <TextBox TextAlignment="Center" Text="{Binding ThumbnailMaxHeight}"/>
                 </StackPanel>
             </GroupBox>
         </StackPanel>
-        <TextBlock HorizontalAlignment="Center" Margin="10 0" Grid.Row="2" Grid.ColumnSpan="2" Text="Important! Previously selected rotate type isn't not reflected!" Foreground="Red"/>
+        <TextBlock HorizontalAlignment="Center" Margin="10 0" Grid.Row="2" Grid.ColumnSpan="2" Text="Important! Previously selected rotate type isn't reflected!" Foreground="Red"/>
         <Button Click="Submit" Content="Submit" Width="100px" Margin="20px" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"/>
     </Grid>
 </Window>

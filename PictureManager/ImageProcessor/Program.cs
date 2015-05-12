@@ -20,7 +20,7 @@ namespace ImageProcessor
 
         private static String _selectedDirectoryPath;
         private static String _processedDirectoryPath;
-        private static String _actionParameter;
+        private static String []_actionParameters = new String[2];
         private static String _resultFileName = "Results.txt";
 
         static void Main(string[] args)
@@ -36,8 +36,8 @@ namespace ImageProcessor
             _selectedDirectoryPath = args[0];
             _processedDirectoryPath = args[1];
             string action = args[2];
-            if (args.Length > 3)
-                _actionParameter = args[3];
+            for (int i = 3; i < args.Length; i++)
+                _actionParameters[i-3] = args[i];
             Action<string, string> actionToPerform = actions[action];
 
             using (new MPI.Environment(ref args))
@@ -58,7 +58,9 @@ namespace ImageProcessor
 
         private static void ThumbnailAction(string filePathToBeProcessed, string outFilePath)
         {
-            ImageBuilder.Current.Build(filePathToBeProcessed, outFilePath, new ResizeSettings("maxwidth=" + 100 + "&maxheight=" + 100 ));
+            int width = int.Parse(_actionParameters[0]);
+            int height = int.Parse(_actionParameters[1]);
+            ImageBuilder.Current.Build(filePathToBeProcessed, outFilePath, new ResizeSettings("maxwidth=" + width + "&maxheight=" + height ));
         }
 
         private static void GrayscaleAction(string filePathToBeProcessed, string outFilePath)
@@ -70,16 +72,18 @@ namespace ImageProcessor
         {
             using (System.Drawing.Image img = System.Drawing.Image.FromFile(filePathToBeProcessed))
             {
-                int width = ((int)(img.Width * 0.8));
-                int height = ((int)(img.Height * 0.8));
+                float scale = float.Parse(_actionParameters[0]);
+                scale /= 100;
+                int width = ((int)(img.Width * scale));
+                int height = ((int)(img.Height * scale));
            
-                ImageBuilder.Current.Build(filePathToBeProcessed, outFilePath, new ResizeSettings("width=" + width + "&height=" + height + "&scale=down"));
+                ImageBuilder.Current.Build(filePathToBeProcessed, outFilePath, new ResizeSettings("width=" + width + "&height=" + height +"&mode=stretch"));
             }
         }
 
         private static void RotateAction(string filePathToBeProcessed, string outFilePath)
         {
-            RotateFlipType rotateType = (RotateFlipType)Enum.Parse(typeof(RotateFlipType), _actionParameter, true);
+            RotateFlipType rotateType = (RotateFlipType)Enum.Parse(typeof(RotateFlipType), _actionParameters[0], true);
             ResizeSettings s = new ResizeSettings()
             {
                 Flip = rotateType
